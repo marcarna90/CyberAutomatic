@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Deterministic netexec stand-in: always "finds" one fixed, fake credential
+# pair, used only to exercise the parsing/finding logic. Never a real tool.
+echo "SMB target 445 testuser:testpass (Pwn3d!)"

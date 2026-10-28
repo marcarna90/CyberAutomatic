@@ -53,11 +53,6 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-# Reserved for the bruteforce double-gate added in Task 13 (checked there
-# before dispatching mode=bruteforce). Referenced now so it is not flagged
-# as unused in the meantime.
-: "$ALLOW_BRUTEFORCE"
-
 # Resolve config: explicit -c, else ./cyberauto.conf next to this script,
 # else the shipped example (so a fresh checkout still runs).
 if [ -z "$CONFIG_PATH" ]; then
@@ -96,6 +91,11 @@ fi
 # Main scan flow below requires a mode and a workspace.
 if [ -z "$MODE" ] || [ -z "$WORKSPACE_ALIAS" ]; then
   echo "ERROR: -m/--mode and -w/--workspace are required" >&2
+  exit 1
+fi
+
+if [ "$MODE" = "bruteforce" ] && [ "$ALLOW_BRUTEFORCE" -ne 1 ]; then
+  echo "ERROR: bruteforce mode requires --allow-bruteforce" >&2
   exit 1
 fi
 

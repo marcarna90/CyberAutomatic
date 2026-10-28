@@ -27,6 +27,12 @@ teardown() { teardown_cyberauto_test; }
   grep -q "ran true-mode on 192.168.1.5" "$CYBERAUTO_TMP/demo/loot/true-mode.out"
 }
 
+@test "refuses bruteforce mode without --allow-bruteforce before even sourcing the mode file" {
+  run "${BATS_TEST_DIRNAME}/../cyberauto" -c "$CYBERAUTO_TMP/cyberauto.conf" -t 192.168.1.5 -m bruteforce -w demo --i-am-authorized --modes-dir "${BATS_TEST_DIRNAME}/fixtures/modes" --workspace-dir "$CYBERAUTO_TMP"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"--allow-bruteforce"* ]]
+}
+
 @test "--list prints created workspace aliases" {
   "${BATS_TEST_DIRNAME}/../cyberauto" -c "$CYBERAUTO_TMP/cyberauto.conf" -t 192.168.1.5 -m true-mode -w demo --i-am-authorized --modes-dir "${BATS_TEST_DIRNAME}/fixtures/modes" --workspace-dir "$CYBERAUTO_TMP" > /dev/null
   run "${BATS_TEST_DIRNAME}/../cyberauto" --workspace-dir "$CYBERAUTO_TMP" --list

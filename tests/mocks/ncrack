@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Deterministic ncrack stand-in: always "finds" one fixed, fake credential
+# pair, used only to exercise the parsing/finding logic. Never a real tool.
+echo "Discovered credentials on target: 'testuser' 'testpass' (ssh)"
