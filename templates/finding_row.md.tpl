@@ -1,0 +1,1 @@
+- **[{{SEVERITY}}]** {{TARGET}} — {{TITLE}}: {{DESCRIPTION}} _(Recommendation: {{RECOMMENDATION}})_

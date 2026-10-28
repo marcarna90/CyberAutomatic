@@ -1,0 +1,9 @@
+# CyberAutomatic configuration — copy to cyberauto.conf and edit.
+#
+# CYBERAUTO_ALLOWED_TARGETS: comma-separated list of IPv4 CIDRs/hosts that
+# offensive modes are permitted to touch. Defaults to private ranges only.
+# Scans refuse to run against anything outside this list, authorized or not.
+CYBERAUTO_ALLOWED_TARGETS="10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.0/8"
+
+# CYBERAUTO_WORKSPACE_DIR: where workspaces (loot, logs, reports) are stored.
+CYBERAUTO_WORKSPACE_DIR="./workspaces"

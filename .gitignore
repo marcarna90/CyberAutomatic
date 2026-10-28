@@ -1,0 +1,12 @@
+# Real (non-example) configuration — never commit a user's actual scope/config.
+cyberauto.conf
+
+# Workspace data (loot, logs, reports) — local scan output, not source.
+workspaces/*
+!workspaces/.gitkeep
+
+# Logs and test run output.
+*.log
+
+# Superpowers scratch workspace for this plan (ledger, briefs) — not shipped code.
+.superpowers/

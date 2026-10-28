@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+echo "[apache-path-traversal] [medium] [http] http://target [CVE-2021-41773]"

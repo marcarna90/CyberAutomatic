@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+cat <<'EOF'
+- Nikto v2.5.0
+---------------------------------------------------------------------------
++ Target IP: 192.168.1.5
++ Server: Apache/2.4.41
++ /: Server may leak inodes via ETags.
++ /admin/: Admin login page/section found.
+---------------------------------------------------------------------------
+EOF

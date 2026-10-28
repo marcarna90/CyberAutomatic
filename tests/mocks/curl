@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Deterministic curl stand-in so tests never make a real network request.
+# Ignores every argument and prints canned crt.sh-shaped JSON.
+echo '[{"name_value":"legacy.example.test"}]'
