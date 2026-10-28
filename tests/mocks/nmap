@@ -13,6 +13,9 @@ Host is up.
 
 PORT   STATE SERVICE
 22/tcp open  ssh
+| vulners:
+|   cpe:/a:openbsd:openssh:8.2:
+|_      CVE-2020-14145  5.9  https://vulners.com/cve/CVE-2020-14145
 
 Nmap done: 1 IP address (1 host up) scanned in 0.01 seconds
 EOF
