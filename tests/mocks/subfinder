@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+echo "www.example.test"
+echo "api.example.test"

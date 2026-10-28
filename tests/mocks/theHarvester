@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+echo "[*] Target: example.test"
+echo "mail.example.test"
+echo "admin@example.test"
