@@ -25,6 +25,7 @@ REIMPORT_SRC=""
 MODES_DIR_OVERRIDE=""
 WORKSPACE_DIR_OVERRIDE=""
 EXTRA_OPTS=""
+DO_RERUN=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -35,6 +36,7 @@ while [ $# -gt 0 ]; do
     -c|--config) CONFIG_PATH="$2"; shift 2 ;;
     --i-am-authorized) AUTHORIZED=1; shift ;;
     --allow-bruteforce) ALLOW_BRUTEFORCE=1; shift ;;
+    --rerun) DO_RERUN=1; shift ;;
     --list) DO_LIST=1; shift ;;
     -d|--delete) DO_DELETE=1; shift ;;
     --export) EXPORT_DEST="$2"; shift 2 ;;
@@ -88,9 +90,33 @@ if [ -n "$REIMPORT_SRC" ]; then
   exit $?
 fi
 
-# Main scan flow below requires a mode and a workspace.
-if [ -z "$MODE" ] || [ -z "$WORKSPACE_ALIAS" ]; then
-  echo "ERROR: -m/--mode and -w/--workspace are required" >&2
+# Main scan flow below requires a workspace, and either a mode (normal run)
+# or --rerun (repeats the last recorded run for that workspace).
+if [ -z "$WORKSPACE_ALIAS" ]; then
+  echo "ERROR: -w/--workspace is required" >&2
+  exit 1
+fi
+
+WORKSPACE_PATH=$(workspace::create "$WORKSPACE_ALIAS" "$WORKSPACE_DIR")
+
+if [ "$DO_RERUN" -eq 1 ]; then
+  MODE=$(workspace::last "$WORKSPACE_PATH" mode)
+  if [ -z "$MODE" ]; then
+    echo "ERROR: no previous run recorded for workspace '${WORKSPACE_ALIAS}'" >&2
+    exit 1
+  fi
+  LAST_IS_FILE=$(workspace::last "$WORKSPACE_PATH" is_file)
+  LAST_TARGET=$(workspace::last "$WORKSPACE_PATH" target)
+  EXTRA_OPTS=$(workspace::last "$WORKSPACE_PATH" opts)
+  if [ "$LAST_IS_FILE" = "1" ]; then
+    TARGET_FILE="$LAST_TARGET"
+    TARGET=""
+  else
+    TARGET="$LAST_TARGET"
+    TARGET_FILE=""
+  fi
+elif [ -z "$MODE" ]; then
+  echo "ERROR: -m/--mode is required (or pass --rerun)" >&2
   exit 1
 fi
 
@@ -99,13 +125,15 @@ if [ "$MODE" = "bruteforce" ] && [ "$ALLOW_BRUTEFORCE" -ne 1 ]; then
   exit 1
 fi
 
-if [ -n "$TARGET" ] && [ -n "$TARGET_FILE" ]; then
-  echo "ERROR: provide either -t/--target or -f/--target-file, not both" >&2
-  exit 1
-fi
-if [ -z "$TARGET" ] && [ -z "$TARGET_FILE" ]; then
-  echo "ERROR: provide one of -t/--target or -f/--target-file" >&2
-  exit 1
+if [ "$DO_RERUN" -ne 1 ]; then
+  if [ -n "$TARGET" ] && [ -n "$TARGET_FILE" ]; then
+    echo "ERROR: provide either -t/--target or -f/--target-file, not both" >&2
+    exit 1
+  fi
+  if [ -z "$TARGET" ] && [ -z "$TARGET_FILE" ]; then
+    echo "ERROR: provide one of -t/--target or -f/--target-file" >&2
+    exit 1
+  fi
 fi
 
 # Scope guard: every target (a single -t host, or every line of a -f file)
@@ -126,7 +154,11 @@ else
   DISPATCH_TARGET="$TARGET"
 fi
 
-WORKSPACE_PATH=$(workspace::create "$WORKSPACE_ALIAS" "$WORKSPACE_DIR")
+if [ -n "$TARGET_FILE" ]; then
+  workspace::record_last "$WORKSPACE_PATH" "$MODE" "$TARGET_FILE" "1" "$EXTRA_OPTS"
+else
+  workspace::record_last "$WORKSPACE_PATH" "$MODE" "$TARGET" "0" "$EXTRA_OPTS"
+fi
 
 MODE_FILE="${MODES_DIR}/${MODE}.sh"
 if [ ! -f "$MODE_FILE" ]; then

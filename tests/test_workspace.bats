@@ -36,6 +36,31 @@ teardown() { teardown_cyberauto_test; }
   [ ! -d "$path" ]
 }
 
+@test "workspace::record_last then workspace::last round-trips every field" {
+  source "${BATS_TEST_DIRNAME}/../lib/workspace.sh"
+  path=$(workspace::create "demo" "$CYBERAUTO_TMP")
+  workspace::record_last "$path" "recon" "192.168.1.5" "0" "--deep"
+  [ "$(workspace::last "$path" mode)" = "recon" ]
+  [ "$(workspace::last "$path" target)" = "192.168.1.5" ]
+  [ "$(workspace::last "$path" is_file)" = "0" ]
+  [ "$(workspace::last "$path" opts)" = "--deep" ]
+}
+
+@test "workspace::record_last overwrites a previous recording instead of duplicating it" {
+  source "${BATS_TEST_DIRNAME}/../lib/workspace.sh"
+  path=$(workspace::create "demo" "$CYBERAUTO_TMP")
+  workspace::record_last "$path" "recon" "192.168.1.5" "0" ""
+  workspace::record_last "$path" "web" "192.168.1.6" "0" ""
+  [ "$(workspace::last "$path" mode)" = "web" ]
+  [ "$(grep -c '^last_mode=' "$path/workspace.meta")" -eq 1 ]
+}
+
+@test "workspace::last prints nothing when no run was ever recorded" {
+  source "${BATS_TEST_DIRNAME}/../lib/workspace.sh"
+  path=$(workspace::create "demo" "$CYBERAUTO_TMP")
+  [ -z "$(workspace::last "$path" mode)" ]
+}
+
 @test "workspace::export then workspace::reimport restores the workspace" {
   source "${BATS_TEST_DIRNAME}/../lib/workspace.sh"
   path=$(workspace::create "roundtrip" "$CYBERAUTO_TMP")

@@ -33,6 +33,20 @@ teardown() { teardown_cyberauto_test; }
   [[ "$output" == *"--allow-bruteforce"* ]]
 }
 
+@test "--rerun repeats the last recorded run for a workspace" {
+  "${BATS_TEST_DIRNAME}/../cyberauto" -c "$CYBERAUTO_TMP/cyberauto.conf" -t 192.168.1.5 -m true-mode -w demo --i-am-authorized --modes-dir "${BATS_TEST_DIRNAME}/fixtures/modes" --workspace-dir "$CYBERAUTO_TMP" > /dev/null
+  rm -f "$CYBERAUTO_TMP/demo/loot/true-mode.out"
+  run "${BATS_TEST_DIRNAME}/../cyberauto" -c "$CYBERAUTO_TMP/cyberauto.conf" -w demo --rerun --i-am-authorized --modes-dir "${BATS_TEST_DIRNAME}/fixtures/modes" --workspace-dir "$CYBERAUTO_TMP"
+  [ "$status" -eq 0 ]
+  grep -q "ran true-mode on 192.168.1.5" "$CYBERAUTO_TMP/demo/loot/true-mode.out"
+}
+
+@test "--rerun fails cleanly when no previous run was recorded for the workspace" {
+  run "${BATS_TEST_DIRNAME}/../cyberauto" -c "$CYBERAUTO_TMP/cyberauto.conf" -w never-run --rerun --i-am-authorized --modes-dir "${BATS_TEST_DIRNAME}/fixtures/modes" --workspace-dir "$CYBERAUTO_TMP"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"no previous run"* ]]
+}
+
 @test "--list prints created workspace aliases" {
   "${BATS_TEST_DIRNAME}/../cyberauto" -c "$CYBERAUTO_TMP/cyberauto.conf" -t 192.168.1.5 -m true-mode -w demo --i-am-authorized --modes-dir "${BATS_TEST_DIRNAME}/fixtures/modes" --workspace-dir "$CYBERAUTO_TMP" > /dev/null
   run "${BATS_TEST_DIRNAME}/../cyberauto" --workspace-dir "$CYBERAUTO_TMP" --list
