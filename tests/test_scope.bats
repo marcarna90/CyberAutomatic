@@ -15,6 +15,27 @@ teardown() { teardown_cyberauto_test; }
   [ "$status" -eq 1 ]
 }
 
+@test "cidr_match: a hostname target against a CIDR entry returns no-match cleanly, no interpreter errors" {
+  source "${BATS_TEST_DIRNAME}/../lib/scope.sh"
+  run scope::cidr_match "example.test" "192.168.0.0/16"
+  [ "$status" -eq 1 ]
+  [ -z "$output" ]
+}
+
+@test "scope::check rejects a hostname not in the allow-list without leaking interpreter errors" {
+  source "${BATS_TEST_DIRNAME}/../lib/scope.sh"
+  run scope::check "example.test" "192.168.0.0/16,10.0.0.0/8" "1"
+  [ "$status" -eq 2 ]
+  [[ "$output" != *"unbound variable"* ]]
+  [[ "$output" != *"value too great"* ]]
+}
+
+@test "scope::check allows a hostname that is an exact allow-list entry" {
+  source "${BATS_TEST_DIRNAME}/../lib/scope.sh"
+  run scope::check "example.test" "192.168.0.0/16,example.test" "1"
+  [ "$status" -eq 0 ]
+}
+
 @test "scope::check refuses without --i-am-authorized" {
   source "${BATS_TEST_DIRNAME}/../lib/scope.sh"
   run scope::check "192.168.1.5" "192.168.0.0/16" "0"

@@ -10,9 +10,14 @@ scope::_ip_to_int() {
 }
 
 # scope::cidr_match <ip> <cidr>
-# Returns 0 if <ip> is inside <cidr> (A.B.C.D/N), 1 otherwise.
+# Returns 0 if <ip> is inside <cidr> (A.B.C.D/N), 1 otherwise. <ip> that
+# isn't a dotted-quad (a hostname, e.g. from osint) cleanly returns 1
+# instead of doing arithmetic on non-numeric octets.
 scope::cidr_match() {
   local ip="$1" cidr="$2" net mask_bits ip_int net_int mask
+  if [[ ! "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+    return 1
+  fi
   net="${cidr%/*}"
   mask_bits="${cidr#*/}"
   ip_int=$(scope::_ip_to_int "$ip")

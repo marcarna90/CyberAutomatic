@@ -43,6 +43,21 @@ teardown() { teardown_cyberauto_test; }
   [[ "$output" == *"beta"* ]]
 }
 
+@test "workspace::delete refuses an empty alias instead of deleting the whole base dir" {
+  source "${BATS_TEST_DIRNAME}/../lib/workspace.sh"
+  workspace::create "keep-me" "$CYBERAUTO_TMP" > /dev/null
+  run workspace::delete "" "$CYBERAUTO_TMP"
+  [ "$status" -eq 1 ]
+  [ -d "$CYBERAUTO_TMP/keep-me" ]
+}
+
+@test "workspace::export refuses an empty alias" {
+  source "${BATS_TEST_DIRNAME}/../lib/workspace.sh"
+  run workspace::export "" "$CYBERAUTO_TMP" "$CYBERAUTO_TMP/out.tar.gz"
+  [ "$status" -eq 1 ]
+  [ ! -f "$CYBERAUTO_TMP/out.tar.gz" ]
+}
+
 @test "workspace::delete removes the workspace" {
   source "${BATS_TEST_DIRNAME}/../lib/workspace.sh"
   path=$(workspace::create "gone" "$CYBERAUTO_TMP")

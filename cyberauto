@@ -82,11 +82,19 @@ if [ "$DO_LIST" -eq 1 ]; then
 fi
 
 if [ "$DO_DELETE" -eq 1 ]; then
+  if [ -z "$WORKSPACE_ALIAS" ]; then
+    echo "ERROR: -w/--workspace is required with --delete" >&2
+    exit 1
+  fi
   workspace::delete "$WORKSPACE_ALIAS" "$WORKSPACE_DIR"
   exit $?
 fi
 
 if [ -n "$EXPORT_DEST" ]; then
+  if [ -z "$WORKSPACE_ALIAS" ]; then
+    echo "ERROR: -w/--workspace is required with --export" >&2
+    exit 1
+  fi
   workspace::export "$WORKSPACE_ALIAS" "$WORKSPACE_DIR" "$EXPORT_DEST"
   exit $?
 fi
@@ -97,6 +105,10 @@ if [ -n "$REIMPORT_SRC" ]; then
 fi
 
 if [ -n "$REPORT_DEST" ]; then
+  if [ -z "$WORKSPACE_ALIAS" ]; then
+    echo "ERROR: -w/--workspace is required with --report" >&2
+    exit 1
+  fi
   REPORT_WORKSPACE_PATH=$(workspace::create "$WORKSPACE_ALIAS" "$WORKSPACE_DIR")
   report::generate "$REPORT_WORKSPACE_PATH" "${SCRIPT_DIR}/templates/report.md.tpl" \
     "${SCRIPT_DIR}/templates/finding_row.md.tpl" "$REPORT_DEST"
@@ -133,9 +145,16 @@ elif [ -z "$MODE" ]; then
   exit 1
 fi
 
-if [ "$MODE" = "bruteforce" ] && [ "$ALLOW_BRUTEFORCE" -ne 1 ]; then
-  echo "ERROR: bruteforce mode requires --allow-bruteforce" >&2
-  exit 1
+if [ "$MODE" = "bruteforce" ]; then
+  if [ "$ALLOW_BRUTEFORCE" -ne 1 ]; then
+    echo "ERROR: bruteforce mode requires --allow-bruteforce" >&2
+    exit 1
+  fi
+  # The mode's own internal check re-validates --allow-bruteforce as
+  # defense-in-depth, reading it from its opts string — forward the flag
+  # the entrypoint already gated on, so the documented single-flag
+  # invocation (--allow-bruteforce once, before --) actually works.
+  EXTRA_OPTS="--allow-bruteforce ${EXTRA_OPTS}"
 fi
 
 if [ "$DO_RERUN" -ne 1 ]; then

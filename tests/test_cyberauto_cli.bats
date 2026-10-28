@@ -9,6 +9,14 @@ teardown() { teardown_cyberauto_test; }
   [[ "$output" == *"not authorized"* ]]
 }
 
+@test "rejects a hostname target cleanly, without leaking bash arithmetic errors (set -u)" {
+  run "${BATS_TEST_DIRNAME}/../cyberauto" -c "$CYBERAUTO_TMP/cyberauto.conf" -t example.test -m true-mode -w demo --i-am-authorized --modes-dir "${BATS_TEST_DIRNAME}/fixtures/modes" --workspace-dir "$CYBERAUTO_TMP"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"outside CYBERAUTO_ALLOWED_TARGETS"* ]]
+  [[ "$output" != *"unbound variable"* ]]
+  [[ "$output" != *"value too great"* ]]
+}
+
 @test "refuses a target outside the allow-list even when authorized" {
   run "${BATS_TEST_DIRNAME}/../cyberauto" -c "$CYBERAUTO_TMP/cyberauto.conf" -t 8.8.8.8 -m true-mode -w demo --i-am-authorized --modes-dir "${BATS_TEST_DIRNAME}/fixtures/modes" --workspace-dir "$CYBERAUTO_TMP"
   [ "$status" -eq 1 ]
@@ -39,6 +47,17 @@ teardown() { teardown_cyberauto_test; }
   jq -e '.title == "test finding"' "$CYBERAUTO_TMP/demo/findings.jsonl"
 }
 
+@test "bruteforce succeeds via the real entrypoint with --allow-bruteforce passed once, as documented" {
+  echo "testuser" > "$CYBERAUTO_TMP/users.txt"
+  echo "testpass" > "$CYBERAUTO_TMP/pass.txt"
+  run "${BATS_TEST_DIRNAME}/../cyberauto" -c "$CYBERAUTO_TMP/cyberauto.conf" -t 192.168.1.5 -m bruteforce -w demo \
+    --i-am-authorized --allow-bruteforce --workspace-dir "$CYBERAUTO_TMP" \
+    -- --service ssh --userlist "$CYBERAUTO_TMP/users.txt" --passlist "$CYBERAUTO_TMP/pass.txt"
+  [ "$status" -eq 0 ]
+  [ -f "$CYBERAUTO_TMP/demo/loot/bruteforce/ncrack.txt" ]
+  jq -e '.severity == "critical"' "$CYBERAUTO_TMP/demo/findings.jsonl"
+}
+
 @test "--rerun repeats the last recorded run for a workspace" {
   "${BATS_TEST_DIRNAME}/../cyberauto" -c "$CYBERAUTO_TMP/cyberauto.conf" -t 192.168.1.5 -m true-mode -w demo --i-am-authorized --modes-dir "${BATS_TEST_DIRNAME}/fixtures/modes" --workspace-dir "$CYBERAUTO_TMP" > /dev/null
   rm -f "$CYBERAUTO_TMP/demo/loot/true-mode.out"
@@ -58,6 +77,24 @@ teardown() { teardown_cyberauto_test; }
   run "${BATS_TEST_DIRNAME}/../cyberauto" -w demo --report "$CYBERAUTO_TMP/out.md" --workspace-dir "$CYBERAUTO_TMP"
   [ "$status" -eq 0 ]
   grep -q "test finding" "$CYBERAUTO_TMP/out.md"
+}
+
+@test "refuses --delete without -w instead of deleting the whole workspace dir" {
+  "${BATS_TEST_DIRNAME}/../cyberauto" -c "$CYBERAUTO_TMP/cyberauto.conf" -t 192.168.1.5 -m true-mode -w keep-me --i-am-authorized --modes-dir "${BATS_TEST_DIRNAME}/fixtures/modes" --workspace-dir "$CYBERAUTO_TMP" > /dev/null
+  run "${BATS_TEST_DIRNAME}/../cyberauto" -d --workspace-dir "$CYBERAUTO_TMP"
+  [ "$status" -eq 1 ]
+  [ -d "$CYBERAUTO_TMP/keep-me" ]
+}
+
+@test "refuses --export without -w" {
+  run "${BATS_TEST_DIRNAME}/../cyberauto" --export "$CYBERAUTO_TMP/out.tar.gz" --workspace-dir "$CYBERAUTO_TMP"
+  [ "$status" -eq 1 ]
+}
+
+@test "refuses --report without -w instead of polluting the workspace base dir" {
+  run "${BATS_TEST_DIRNAME}/../cyberauto" --report "$CYBERAUTO_TMP/out.md" --workspace-dir "$CYBERAUTO_TMP"
+  [ "$status" -eq 1 ]
+  [ ! -d "$CYBERAUTO_TMP/loot" ]
 }
 
 @test "--list prints created workspace aliases" {

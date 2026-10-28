@@ -37,6 +37,10 @@ workspace::list() {
 # workspace::delete <alias> <base_dir>
 workspace::delete() {
   local alias="$1" base_dir="$2" path
+  if [ -z "$alias" ]; then
+    echo "ERROR: workspace::delete: alias must not be empty" >&2
+    return 1
+  fi
   path="${base_dir}/${alias}"
   if [ ! -d "$path" ]; then
     echo "ERROR: workspace '${alias}' does not exist" >&2
@@ -79,6 +83,10 @@ workspace::last() {
 # workspace::export <alias> <base_dir> <dest_tar_path>
 workspace::export() {
   local alias="$1" base_dir="$2" dest_tar_path="$3"
+  if [ -z "$alias" ]; then
+    echo "ERROR: workspace::export: alias must not be empty" >&2
+    return 1
+  fi
   if [ ! -d "${base_dir}/${alias}" ]; then
     echo "ERROR: workspace '${alias}' does not exist" >&2
     return 1
