@@ -3,6 +3,20 @@ load test_helper
 setup() { setup_cyberauto_test; }
 teardown() { teardown_cyberauto_test; }
 
+@test "workspace::create creates the base directory itself if it does not exist yet" {
+  source "${BATS_TEST_DIRNAME}/../lib/workspace.sh"
+  fresh_base="${CYBERAUTO_TMP}/not-created-yet"
+  path=$(workspace::create "demo" "$fresh_base")
+  [ -d "$path/loot" ]
+}
+
+@test "workspace::create never falls back to a root-relative path for a deeply missing base_dir" {
+  source "${BATS_TEST_DIRNAME}/../lib/workspace.sh"
+  fresh_base="${CYBERAUTO_TMP}/deeply/nested/not-created-yet"
+  path=$(workspace::create "demo" "$fresh_base")
+  [[ "$path" == "$CYBERAUTO_TMP"/* ]]
+}
+
 @test "workspace::create makes loot/logs/reports and workspace.meta" {
   source "${BATS_TEST_DIRNAME}/../lib/workspace.sh"
   path=$(workspace::create "demo" "$CYBERAUTO_TMP")

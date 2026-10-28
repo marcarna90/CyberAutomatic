@@ -10,6 +10,10 @@ source "${SCRIPT_DIR}/lib/deps.sh"
 source "${SCRIPT_DIR}/lib/scope.sh"
 # shellcheck source=lib/workspace.sh
 source "${SCRIPT_DIR}/lib/workspace.sh"
+# shellcheck source=lib/findings.sh
+source "${SCRIPT_DIR}/lib/findings.sh"
+# shellcheck source=lib/report.sh
+source "${SCRIPT_DIR}/lib/report.sh"
 
 TARGET=""
 TARGET_FILE=""
@@ -22,6 +26,7 @@ DO_LIST=0
 DO_DELETE=0
 EXPORT_DEST=""
 REIMPORT_SRC=""
+REPORT_DEST=""
 MODES_DIR_OVERRIDE=""
 WORKSPACE_DIR_OVERRIDE=""
 EXTRA_OPTS=""
@@ -41,6 +46,7 @@ while [ $# -gt 0 ]; do
     -d|--delete) DO_DELETE=1; shift ;;
     --export) EXPORT_DEST="$2"; shift 2 ;;
     --reimport) REIMPORT_SRC="$2"; shift 2 ;;
+    --report) REPORT_DEST="$2"; shift 2 ;;
     --modes-dir) MODES_DIR_OVERRIDE="$2"; shift 2 ;;
     --workspace-dir) WORKSPACE_DIR_OVERRIDE="$2"; shift 2 ;;
     --)
@@ -87,6 +93,13 @@ fi
 
 if [ -n "$REIMPORT_SRC" ]; then
   workspace::reimport "$REIMPORT_SRC" "$WORKSPACE_DIR"
+  exit $?
+fi
+
+if [ -n "$REPORT_DEST" ]; then
+  REPORT_WORKSPACE_PATH=$(workspace::create "$WORKSPACE_ALIAS" "$WORKSPACE_DIR")
+  report::generate "$REPORT_WORKSPACE_PATH" "${SCRIPT_DIR}/templates/report.md.tpl" \
+    "${SCRIPT_DIR}/templates/finding_row.md.tpl" "$REPORT_DEST"
   exit $?
 fi
 

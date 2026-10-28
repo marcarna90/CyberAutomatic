@@ -33,6 +33,12 @@ teardown() { teardown_cyberauto_test; }
   [[ "$output" == *"--allow-bruteforce"* ]]
 }
 
+@test "dispatched modes have findings::add available through the real entrypoint" {
+  run "${BATS_TEST_DIRNAME}/../cyberauto" -c "$CYBERAUTO_TMP/cyberauto.conf" -t 192.168.1.5 -m finding-mode -w demo --i-am-authorized --modes-dir "${BATS_TEST_DIRNAME}/fixtures/modes" --workspace-dir "$CYBERAUTO_TMP"
+  [ "$status" -eq 0 ]
+  jq -e '.title == "test finding"' "$CYBERAUTO_TMP/demo/findings.jsonl"
+}
+
 @test "--rerun repeats the last recorded run for a workspace" {
   "${BATS_TEST_DIRNAME}/../cyberauto" -c "$CYBERAUTO_TMP/cyberauto.conf" -t 192.168.1.5 -m true-mode -w demo --i-am-authorized --modes-dir "${BATS_TEST_DIRNAME}/fixtures/modes" --workspace-dir "$CYBERAUTO_TMP" > /dev/null
   rm -f "$CYBERAUTO_TMP/demo/loot/true-mode.out"
@@ -45,6 +51,13 @@ teardown() { teardown_cyberauto_test; }
   run "${BATS_TEST_DIRNAME}/../cyberauto" -c "$CYBERAUTO_TMP/cyberauto.conf" -w never-run --rerun --i-am-authorized --modes-dir "${BATS_TEST_DIRNAME}/fixtures/modes" --workspace-dir "$CYBERAUTO_TMP"
   [ "$status" -eq 1 ]
   [[ "$output" == *"no previous run"* ]]
+}
+
+@test "--report renders a Markdown report from the workspace's findings" {
+  "${BATS_TEST_DIRNAME}/../cyberauto" -c "$CYBERAUTO_TMP/cyberauto.conf" -t 192.168.1.5 -m finding-mode -w demo --i-am-authorized --modes-dir "${BATS_TEST_DIRNAME}/fixtures/modes" --workspace-dir "$CYBERAUTO_TMP" > /dev/null
+  run "${BATS_TEST_DIRNAME}/../cyberauto" -w demo --report "$CYBERAUTO_TMP/out.md" --workspace-dir "$CYBERAUTO_TMP"
+  [ "$status" -eq 0 ]
+  grep -q "test finding" "$CYBERAUTO_TMP/out.md"
 }
 
 @test "--list prints created workspace aliases" {

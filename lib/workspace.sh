@@ -5,8 +5,14 @@
 # Idempotent: creates the workspace if absent, reuses it (untouched) if
 # present. Prints the absolute workspace path to stdout. Always returns 0.
 workspace::create() {
-  local alias="$1" base_dir="$2" path
-  path="$(cd "$base_dir" && pwd)/${alias}"
+  local alias="$1" base_dir="$2" path resolved_base
+  mkdir -p "$base_dir"
+  resolved_base="$(cd "$base_dir" && pwd)"
+  if [ -z "$resolved_base" ]; then
+    echo "ERROR: workspace::create: cannot resolve base directory '${base_dir}'" >&2
+    return 1
+  fi
+  path="${resolved_base}/${alias}"
   mkdir -p "$path/loot" "$path/logs" "$path/reports"
   if [ ! -f "$path/workspace.meta" ]; then
     {
